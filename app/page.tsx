@@ -22,21 +22,32 @@ export default function Home() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCryptoPrice = async () => {
       try {
+        setError(null);
         const response = await fetch(`/api/crypto-price?symbol=${selectedCrypto}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
         if (data.price) {
           setFormData(prev => ({
             ...prev,
             entryPrice: Number(data.price).toFixed(2)
           }));
+        } else {
+          throw new Error('No price data received');
         }
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching crypto price:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch price');
         setIsLoading(false);
       }
     };
@@ -146,7 +157,7 @@ export default function Home() {
                   value={formData.entryPrice}
                   onChange={handleInputChange}
                   className="w-full px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="正在获取价格..."
+                  placeholder={error || "正在获取价格..."}
                   disabled={isLoading}
                 />
                 {isLoading && (
