@@ -38,6 +38,12 @@ export default function Home() {
             totalCapital: data.totalCapital
           }))
         }
+        if (data.risk && !isTotalCapitalModified) {
+          setFormData(prev => ({
+            ...prev,
+            risk: data.risk
+          }))
+        }
       } catch (error) {
         console.error('Error fetching total capital:', error)
       }
@@ -158,7 +164,7 @@ export default function Home() {
                 name="totalCapital"
                 value={formData.totalCapital}
                 onChange={handleInputChange}
-                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none transition-all duration-200"
                 placeholder="1000"
               />
             </div>
@@ -171,50 +177,71 @@ export default function Home() {
                 name="leverage"
                 value={formData.leverage}
                 onChange={handleInputChange}
-                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none transition-all duration-200"
                 placeholder="5"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">风险 (%)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                name="risk"
-                value={formData.risk}
-                onChange={handleInputChange}
-                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                placeholder="1"
-              />
+              <div className="flex items-center w-[200px] sm:w-[280px] ml-2 bg-white rounded-lg border border-gray-300">
+                <button
+                  type="button"
+                  className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      risk: String(Math.max(1, Number(prev.risk) - 1)),
+                    }))
+                  }
+                  disabled={Number(formData.risk) <= 1}
+                >-</button>
+                <span className="flex-1 text-center text-lg select-none">{formData.risk}</span>
+                <button
+                  type="button"
+                  className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      risk: String(Math.min(100, Number(prev.risk) + 1)),
+                    }))
+                  }
+                  disabled={Number(formData.risk) >= 100}
+                >+</button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">交易对</label>
-              <select
-                value={selectedCrypto}
-                onChange={handleCryptoChange}
-                className={`
-                  w-[200px] sm:w-[280px]      /* 固定宽度 */
-                  px-3 pr-8 py-1.5            /* 左右各留点内边距，pr-8 给箭头留位置 */
-                  rounded-lg border border-gray-300
-                  bg-white text-gray-900
-                  text-center                 /* 普通文本居中 */
-                  focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  transition-all duration-200
-                `}
-                style={{
-                  textAlignLast: 'center',
-                }}
-              >
-                {CRYPTO_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-
+              <div className="relative w-[200px] sm:w-[280px] ml-2">
+                <select
+                  value={selectedCrypto}
+                  onChange={handleCryptoChange}
+                  className={`
+                    w-full px-3 py-1.5
+                    rounded-lg border border-gray-300
+                    bg-white text-gray-900
+                    text-center
+                    transition-all duration-200
+                    appearance-none
+                    hover:cursor-pointer
+                    focus:outline-none
+                  `}
+                  style={{ textAlignLast: 'center' }}
+                >
+                  {CRYPTO_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {/* Custom arrow */}
+                <div className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 flex flex-col items-center">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 8L2 4h8L6 8z" fill="#222" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -225,7 +252,7 @@ export default function Home() {
                 name="entryPrice"
                 value={formData.entryPrice}
                 onChange={handleInputChange}
-                className="w-[200px] text-center sm:w-[280px] px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[200px] text-center sm:w-[280px] px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none transition-all duration-200"
                 placeholder={error || "正在获取价格..."}
                 disabled={isLoading}
               />
@@ -244,7 +271,7 @@ export default function Home() {
                     calculate()
                   }
                 }}
-                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[200px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none transition-all duration-200"
                 placeholder="请输入止损价"
               />
             </div>
@@ -259,12 +286,12 @@ export default function Home() {
             {result.positionSize > 0 && (
               <div className="mt-3 p-3 rounded-lg border border-blue-100 bg-blue-50">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white p-2 rounded">
+                  <div className="bg-white p-3 rounded">
                     <p className="text-xs text-gray-600">仓位数量</p>
                     <p className="text-lg font-bold text-gray-900">{result.positionSize}</p>
                   </div>
                   <div
-                    className="bg-white p-2 rounded cursor-pointer hover:bg-green-50 transition"
+                    className="bg-white p-3 rounded cursor-pointer hover:bg-green-50 transition"
                     onClick={handleCopyMargin}
                     title="点击复制保证金"
                   >
