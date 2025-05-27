@@ -26,12 +26,14 @@ export default function Home() {
   useEffect(() => {
     const fetchCryptoPrice = async () => {
       try {
-        const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${selectedCrypto}`);
+        const response = await fetch(`/api/crypto-price?symbol=${selectedCrypto}`);
         const data = await response.json();
-        setFormData(prev => ({
-          ...prev,
-          entryPrice: Number(data.price).toFixed(2)
-        }));
+        if (data.price) {
+          setFormData(prev => ({
+            ...prev,
+            entryPrice: Number(data.price).toFixed(2)
+          }));
+        }
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching crypto price:', error);
