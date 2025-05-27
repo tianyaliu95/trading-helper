@@ -1,10 +1,10 @@
-"use client";
-import { useState, useEffect } from "react";
+"use client"
+import { useState, useEffect } from "react"
 
 const CRYPTO_OPTIONS = [
   { value: "BTCUSDT", label: "BTC/USDT" },
   { value: "ETHUSDT", label: "ETH/USDT" },
-];
+]
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -13,66 +13,89 @@ export default function Home() {
     totalCapital: "1000",
     risk: "1",
     leverage: "5",
-  });
+  })
 
-  const [selectedCrypto, setSelectedCrypto] = useState("BTCUSDT");
+  const [selectedCrypto, setSelectedCrypto] = useState("BTCUSDT")
   const [result, setResult] = useState({
     positionSize: 0,
     margin: 0,
-  });
+  })
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isTotalCapitalModified, setIsTotalCapitalModified] = useState(false)
+
+  useEffect(() => {
+    const fetchTotalCapital = async () => {
+      try {
+        const response = await fetch('/api/total-capital')
+        const data = await response.json()
+        if (data.totalCapital && !isTotalCapitalModified) {
+          setFormData(prev => ({
+            ...prev,
+            totalCapital: data.totalCapital
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching total capital:', error)
+      }
+    }
+
+    fetchTotalCapital()
+  }, [isTotalCapitalModified])
 
   useEffect(() => {
     const fetchCryptoPrice = async () => {
       try {
-        setError(null);
-        const response = await fetch(`/api/crypto-price?symbol=${selectedCrypto}`);
-        const data = await response.json();
+        setError(null)
+        const response = await fetch(`/api/crypto-price?symbol=${selectedCrypto}`)
+        const data = await response.json()
         
         if (!response.ok) {
-          throw new Error(data.error || `HTTP error! status: ${response.status}`);
+          throw new Error(data.error || `HTTP error! status: ${response.status}`)
         }
 
         if (data.error) {
-          throw new Error(data.error);
+          throw new Error(data.error)
         }
 
         if (data.price) {
           setFormData(prev => ({
             ...prev,
             entryPrice: Number(data.price).toFixed(2)
-          }));
-          setIsLoading(false);
+          }))
+          setIsLoading(false)
         } else {
-          throw new Error('No price data received');
+          throw new Error('No price data received')
         }
       } catch (error) {
-        console.error('Error fetching crypto price:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch price');
-        setIsLoading(false);
+        console.error('Error fetching crypto price:', error)
+        setError(error instanceof Error ? error.message : 'Failed to fetch price')
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchCryptoPrice();
-    const interval = setInterval(fetchCryptoPrice, 5000); // 10 seconds
+    fetchCryptoPrice()
+    const interval = setInterval(fetchCryptoPrice, 10000) // 10 seconds
 
-    return () => clearInterval(interval);
-  }, [selectedCrypto]);
+    return () => clearInterval(interval)
+  }, [selectedCrypto])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
+    if (name === 'totalCapital') {
+      setIsTotalCapitalModified(true)
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  };
+    }))
+  }
 
   const handleCryptoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCrypto(e.target.value);
-    setIsLoading(true);
-  };
+    setSelectedCrypto(e.target.value)
+    setIsLoading(true)
+  }
 
   const calculate = () => {
     const {
@@ -81,19 +104,19 @@ export default function Home() {
       totalCapital,
       risk,
       leverage,
-    } = formData;
+    } = formData
 
     const positionSize =
       (Number(totalCapital) * (Number(risk) / 100)) /
-      (Math.abs(Number(entryPrice) - Number(stopLoss)));
+      (Math.abs(Number(entryPrice) - Number(stopLoss)))
 
-    const margin = (positionSize * Number(entryPrice)) / Number(leverage);
+    const margin = (positionSize * Number(entryPrice)) / Number(leverage)
 
     setResult({
       positionSize: Number(positionSize.toFixed(6)),
       margin: Number(margin.toFixed(2)),
-    });
-  };
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-200 p-2 flex flex-col items-center justify-center">
@@ -180,7 +203,7 @@ export default function Home() {
                 onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    calculate();
+                    calculate()
                   }
                 }}
                 className="flex-1 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -213,5 +236,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  )
 }
