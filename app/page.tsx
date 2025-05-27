@@ -10,7 +10,7 @@ export default function Home() {
   const [formData, setFormData] = useState({
     entryPrice: "",
     stopLoss: "",
-    totalCapital: "1000",
+    totalCapital: "",
     risk: "1",
     leverage: "5",
   })
@@ -24,6 +24,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isTotalCapitalModified, setIsTotalCapitalModified] = useState(false)
+  const [notification, setNotification] = useState(false)
 
   useEffect(() => {
     const fetchTotalCapital = async () => {
@@ -50,7 +51,7 @@ export default function Home() {
         setError(null)
         const response = await fetch(`/api/crypto-price?symbol=${selectedCrypto}`)
         const data = await response.json()
-        
+
         if (!response.ok) {
           throw new Error(data.error || `HTTP error! status: ${response.status}`)
         }
@@ -65,6 +66,7 @@ export default function Home() {
             entryPrice: Number(data.price).toFixed(2)
           }))
           setIsLoading(false)
+          console.log('Updating entry price:', selectedCrypto, Number(Number(data.price).toFixed(2)))
         } else {
           throw new Error('No price data received')
         }
@@ -118,19 +120,40 @@ export default function Home() {
     })
   }
 
+  // 复制保证金
+  const handleCopyMargin = async () => {
+    try {
+      await navigator.clipboard.writeText(result.margin.toString())
+      setNotification(true)
+      setTimeout(() => setNotification(false), 3000)
+      console.log('Copied margin:', selectedCrypto, result.margin)
+    } catch (e) {
+      console.log('Error copying margin:', e)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-200 p-2 flex flex-col items-center justify-center">
+      {/* Notification Banner */}
+      {notification && (
+        <div className="fixed top-0 left-0 w-full z-50 flex justify-center">
+          <div className="mt-4 px-6 py-2 rounded bg-green-100 text-green-800 shadow text-sm animate-fade-in-out">
+            保证金已复制到剪贴板
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-lg">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">总资金</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 name="totalCapital"
                 value={formData.totalCapital}
                 onChange={handleInputChange}
-                className="flex-1 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="1000"
               />
             </div>
@@ -138,11 +161,12 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">杠杆</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 name="leverage"
                 value={formData.leverage}
                 onChange={handleInputChange}
-                className="flex-1 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="5"
               />
             </div>
@@ -150,11 +174,12 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">风险 (%)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 name="risk"
                 value={formData.risk}
                 onChange={handleInputChange}
-                className="flex-1 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="1"
               />
             </div>
@@ -164,7 +189,7 @@ export default function Home() {
               <select
                 value={selectedCrypto}
                 onChange={handleCryptoChange}
-                className="flex-1 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[228px] text-center sm:w-[280px] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
                 {CRYPTO_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value} className="py-2">
@@ -176,28 +201,23 @@ export default function Home() {
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">入场价</label>
-              <div className="flex-1 ml-2 relative">
-                <input
-                  type="number"
-                  name="entryPrice"
-                  value={formData.entryPrice}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder={error || "正在获取价格..."}
-                  disabled={isLoading}
-                />
-                {isLoading && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                  </div>
-                )}
-              </div>
+              <input
+                type="text"
+                inputMode="decimal"
+                name="entryPrice"
+                value={formData.entryPrice}
+                onChange={handleInputChange}
+                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder={error || "正在获取价格..."}
+                disabled={isLoading}
+              />
             </div>
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">止损价</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 name="stopLoss"
                 value={formData.stopLoss}
                 onChange={handleInputChange}
@@ -206,26 +226,30 @@ export default function Home() {
                     calculate()
                   }
                 }}
-                className="flex-1 ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="请输入止损价"
               />
             </div>
 
             <button
               onClick={calculate}
-              className="w-full bg-green-600 hover:cursor-pointer text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full bg-green-600 hover:cursor-pointer text-white font-medium py-2 px-4 mt-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               计算
             </button>
 
             {result.positionSize > 0 && (
-              <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+              <div className="mt-3 p-3 rounded-lg border border-blue-100 bg-blue-50">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-2 rounded">
                     <p className="text-xs text-gray-600">仓位数量</p>
                     <p className="text-lg font-bold text-gray-900">{result.positionSize}</p>
                   </div>
-                  <div className="bg-white p-2 rounded">
+                  <div
+                    className="bg-white p-2 rounded cursor-pointer hover:bg-green-50 transition"
+                    onClick={handleCopyMargin}
+                    title="点击复制保证金"
+                  >
                     <p className="text-xs text-gray-600">保证金</p>
                     <p className="text-lg font-bold text-gray-900">{result.margin}</p>
                   </div>

@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "仓位计算器",
-  description: "加密货币交易仓位计算工具",
+  description: "crypto trading 仓位计算工具",
 };
 
 export default function RootLayout({
