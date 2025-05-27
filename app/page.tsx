@@ -26,6 +26,7 @@ export default function Home() {
   const [isTotalCapitalModified, setIsTotalCapitalModified] = useState(false)
   const [notification, setNotification] = useState(false)
 
+  // 获取总资金
   useEffect(() => {
     const fetchTotalCapital = async () => {
       try {
@@ -45,6 +46,7 @@ export default function Home() {
     fetchTotalCapital()
   }, [isTotalCapitalModified])
 
+  // 获取实时市价
   useEffect(() => {
     const fetchCryptoPrice = async () => {
       try {
@@ -83,6 +85,7 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [selectedCrypto])
 
+  // input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     if (name === 'totalCapital') {
@@ -94,6 +97,7 @@ export default function Home() {
     }))
   }
 
+  // 交易对
   const handleCryptoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCrypto(e.target.value)
     setIsLoading(true)
@@ -142,8 +146,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
       <div className="w-full max-w-lg">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-white rounded-xl shadow-lg p-8 sm:p-10">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 w-20">总资金</label>
@@ -153,7 +158,7 @@ export default function Home() {
                 name="totalCapital"
                 value={formData.totalCapital}
                 onChange={handleInputChange}
-                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[180px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="1000"
               />
             </div>
@@ -166,7 +171,7 @@ export default function Home() {
                 name="leverage"
                 value={formData.leverage}
                 onChange={handleInputChange}
-                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[180px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="5"
               />
             </div>
@@ -179,7 +184,7 @@ export default function Home() {
                 name="risk"
                 value={formData.risk}
                 onChange={handleInputChange}
-                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[180px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="1"
               />
             </div>
@@ -189,7 +194,7 @@ export default function Home() {
               <select
                 value={selectedCrypto}
                 onChange={handleCryptoChange}
-                className="w-[228px] text-center sm:w-[280px] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[180px] text-center sm:w-[280px] px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
                 {CRYPTO_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value} className="py-2">
@@ -207,7 +212,7 @@ export default function Home() {
                 name="entryPrice"
                 value={formData.entryPrice}
                 onChange={handleInputChange}
-                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[180px] text-center sm:w-[280px] px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder={error || "正在获取价格..."}
                 disabled={isLoading}
               />
@@ -226,7 +231,7 @@ export default function Home() {
                     calculate()
                   }
                 }}
-                className="w-[228px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-[180px] text-center sm:w-[280] ml-2 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="请输入止损价"
               />
             </div>
