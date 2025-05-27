@@ -29,22 +29,25 @@ export default function Home() {
       try {
         setError(null);
         const response = await fetch(`/api/crypto-price?symbol=${selectedCrypto}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        }
+
         if (data.error) {
           throw new Error(data.error);
         }
+
         if (data.price) {
           setFormData(prev => ({
             ...prev,
             entryPrice: Number(data.price).toFixed(2)
           }));
+          setIsLoading(false);
         } else {
           throw new Error('No price data received');
         }
-        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching crypto price:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch price');
@@ -53,7 +56,7 @@ export default function Home() {
     };
 
     fetchCryptoPrice();
-    const interval = setInterval(fetchCryptoPrice, 3000);
+    const interval = setInterval(fetchCryptoPrice, 5000); // 10 seconds
 
     return () => clearInterval(interval);
   }, [selectedCrypto]);
