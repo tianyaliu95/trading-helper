@@ -196,7 +196,7 @@ export default function Home() {
                   }
                   disabled={Number(formData.risk) <= 1}
                 >-</button>
-                <span className="flex-1 text-center text-lg select-none">{formData.risk}</span>
+                <span className="flex-1 text-center text-lg text-gray-700 select-none">{formData.risk}</span>
                 <button
                   type="button"
                   className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
