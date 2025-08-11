@@ -25,6 +25,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [isTotalCapitalModified, setIsTotalCapitalModified] = useState(false)
   const [notification, setNotification] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
 
   // 获取总资金
   useEffect(() => {
@@ -86,10 +88,17 @@ export default function Home() {
     }
 
     fetchCryptoPrice()
-    const interval = setInterval(fetchCryptoPrice, 10000) // 10 seconds
+    let interval: NodeJS.Timeout | null = null
 
-    return () => clearInterval(interval)
-  }, [selectedCrypto])
+    if (!isPaused) {
+      interval = setInterval(fetchCryptoPrice, 10000) // 10 seconds
+    }
+
+    // clean-up func of the useEffect, 当[selectedCrypto, isPaused] 变化时，会执行这个函数
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [selectedCrypto, isPaused])
 
   useEffect(() => {
     // const handleKeyDown = (e: KeyboardEvent) => {
@@ -101,7 +110,7 @@ export default function Home() {
     // document.addEventListener('keydown', handleKeyDown);
     // return () => document.removeEventListener('keydown', handleKeyDown);
 
-    if (formData.entryPrice && formData.stopLoss && formData.totalCapital && formData.risk && formData.leverage) {  
+    if (formData.entryPrice && formData.stopLoss && formData.totalCapital && formData.risk && formData.leverage) {
       calculate()
     }
   }, [formData]);
@@ -112,6 +121,10 @@ export default function Home() {
     if (name === 'totalCapital') {
       setIsTotalCapitalModified(true)
     }
+    // 任何输入变化都恢复价格更新
+    if (isPaused) {
+      setIsPaused(false)
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -120,6 +133,10 @@ export default function Home() {
 
   // 交易对
   const handleCryptoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // 交易对变化也恢复价格更新
+    if (isPaused) {
+      setIsPaused(false)
+    }
     setSelectedCrypto(e.target.value)
     setIsLoading(true)
   }
@@ -150,7 +167,9 @@ export default function Home() {
     try {
       await navigator.clipboard.writeText(result.margin.toString())
       setNotification(true)
+      setIsCopied(true)
       setTimeout(() => setNotification(false), 3000)
+      setTimeout(() => setIsCopied(false), 2000) // 复制图标状态持续2秒
       console.log('Copied margin:', selectedCrypto, result.margin)
     } catch (e) {
       console.log('Error copying margin:', e)
@@ -190,24 +209,26 @@ export default function Home() {
                 <button
                   type="button"
                   className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
-                  onClick={() =>
+                  onClick={() => {
+                    if (isPaused) setIsPaused(false)
                     setFormData((prev) => ({
                       ...prev,
                       leverage: String(Math.max(1, Number(prev.leverage) - 1)),
                     }))
-                  }
+                  }}
                   disabled={Number(formData.leverage) <= 1}
                 >-</button>
                 <span className="flex-1 text-center text-lg text-gray-700 select-none">{formData.leverage}</span>
                 <button
                   type="button"
                   className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
-                  onClick={() =>
+                  onClick={() => {
+                    if (isPaused) setIsPaused(false)
                     setFormData((prev) => ({
                       ...prev,
                       leverage: String(Math.min(100, Number(prev.leverage) + 1)),
                     }))
-                  }
+                  }}
                   disabled={Number(formData.leverage) >= 100}
                 >+</button>
               </div>
@@ -219,24 +240,26 @@ export default function Home() {
                 <button
                   type="button"
                   className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
-                  onClick={() =>
+                  onClick={() => {
+                    if (isPaused) setIsPaused(false)
                     setFormData((prev) => ({
                       ...prev,
                       risk: String(Math.max(1, Number(prev.risk) - 1)),
                     }))
-                  }
+                  }}
                   disabled={Number(formData.risk) <= 1}
                 >-</button>
                 <span className="flex-1 text-center text-lg text-gray-700 select-none">{formData.risk}</span>
                 <button
                   type="button"
                   className="w-10 h-10 text-xl text-gray-500 hover:cursor-pointer hover:text-gray-700 focus:outline-none"
-                  onClick={() =>
+                  onClick={() => {
+                    if (isPaused) setIsPaused(false)
                     setFormData((prev) => ({
                       ...prev,
                       risk: String(Math.min(100, Number(prev.risk) + 1)),
                     }))
-                  }
+                  }}
                   disabled={Number(formData.risk) >= 100}
                 >+</button>
               </div>
@@ -302,12 +325,52 @@ export default function Home() {
               />
             </div>
 
-            <button
-              onClick={calculate}
-              className="w-full bg-green-700 text-white hover:cursor-pointer font-medium py-2 px-4 mt-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              计算
-            </button>
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={calculate}
+                className="flex-1 bg-green-700 text-white hover:cursor-pointer font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                计算
+              </button>
+              <button
+                onClick={() => setIsPaused(!isPaused)}
+                className={`w-12 h-10 border rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none flex items-center justify-center hover:cursor-pointer ${isPaused
+                  ? 'bg-green-100 text-green-800 border border-green-200'
+                  : 'bg-orange-100 text-orange-800 border border-orange-200'
+                  }`}
+                title={isPaused ? "继续价格更新" : "暂停价格更新"}
+              >
+                {isPaused ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* 价格更新状态提示 */}
+            <div className={`mt-4 px-4 py-2 rounded-lg text-center text-sm transition-all duration-200 ${isPaused
+              ? 'bg-orange-100 text-orange-800 border border-orange-200'
+              : 'bg-green-100 text-green-800 border border-green-200'
+              }`}>
+              {isPaused ? (
+                <div className="flex items-center justify-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                  <span>价格更新已暂停</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                  <span>价格实时更新中 (每10秒)</span>
+                </div>
+              )}
+            </div>
 
             {result.positionSize > 0 && (
               <div className="mt-2">
@@ -317,12 +380,24 @@ export default function Home() {
                     <p className="text-lg font-bold">{result.positionSize}</p>
                   </div>
                   <div
-                    className="bg-green-700 text-white p-3 rounded-lg p-4"
+                    className="bg-green-700 text-white p-3 rounded-lg p-4 relative cursor-pointer hover:cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
                     onClick={handleCopyMargin}
                     title="点击复制保证金"
                   >
                     <p className="text-base mb-1">保证金</p>
                     <p className="text-lg font-bold">{result.margin}</p>
+                    {/* 复制图标 */}
+                    <div className="absolute top-3 right-3">
+                      {isCopied ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="">
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
